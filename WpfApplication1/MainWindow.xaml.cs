@@ -98,6 +98,7 @@ namespace ComfoAir
             // Start output
             updateTextBox(tb_Output, "--- SERIAL PORT: " + _serialPort.PortName + " (" + serOptions + ")---\n", fontstyles.BOLD);
             updateTextBox(tb_RawOutput, "\n--- SERIAL PORT: " + _serialPort.PortName + " (" + serOptions + ")---\n", fontstyles.BOLD);
+            updateTextBox(tb_RawOutput, "");   // New textblock to hold the raw data, in the normal style...
 
             // Start serial port monitoring
             _serialPort.Open();
@@ -130,14 +131,25 @@ namespace ComfoAir
                 // See also: http://www.sparxeng.com/blog/software/must-use-net-system-io-ports-serialport
                 int bytesRead = _serialPort.Read(serialBuffer, 0, serialBuffer.Length);
 
+                // Retrieve only the read data from our buffer for further processing
+                // This is to avoid a bunch of redundant zeroes when parsing... 
+                byte[] readBuffer = new byte[bytesRead];
+                Array.Copy(serialBuffer, 0, readBuffer, 0, bytesRead);
+
+                // Dump raw data
+                Dispatcher.Invoke(new ThreadStart(delegate
+                {
+                    appendToTextBox(tb_RawOutput, ByteArrayToHexString(readBuffer));
+                }));
+
                 // Prepare for parsing; first check if there is still outstanding data to parse...
                 byte[] truncBuffer = new byte[bytesRead + processSize];
                 if (processSize > 0)
                 {
                     // Copy outstanding data to new buffer
                     Array.Copy(processBuffer, 0, truncBuffer, 0, processSize);
-                    // Copy from our serial buffer the actual length read to avoid a bunch of redundant zeroes when parsing... 
-                    Array.Copy(serialBuffer, 0, truncBuffer, processSize, bytesRead);
+                    // Copy new serial data
+                    Array.Copy(readBuffer, 0, truncBuffer, processSize, bytesRead);
                     // Clear "cue" of waiting data... 
                     dropProcessBuffer();
                 }
@@ -147,8 +159,14 @@ namespace ComfoAir
                     Array.Copy(serialBuffer, 0, truncBuffer, 0, bytesRead);
                 }
 
+
                 // Feed data to parser
-                int processedOffset = parseAndShowData(truncBuffer);
+                int processedOffset = 0;
+                Dispatcher.Invoke(new ThreadStart(delegate
+                {
+                    processedOffset = parseAndShowData(truncBuffer);                   
+                }));
+
 
                 // Next, retain all data past the "processedOffset"; this could be a partial command of which we get
                 // the rest in a next serial port read... 
@@ -182,10 +200,6 @@ namespace ComfoAir
 
     private int parseAndShowData(byte[] inputBytes)
         {
-            // Append data to the raw output
-            //Dispatcher.BeginInvoke(new ThreadStart(delegate { tb_RawOutput.Text += ByteArrayToHexString(inputBytes); }));
-            updateTextBox(tb_RawOutput, ByteArrayToHexString(inputBytes));
-
             // Parse the file into Zehnder commands
             ZehnderParser zParser = new ZehnderParser(inputBytes);
             List<ZehnderCommand> cmds = zParser.parseResult;
@@ -209,7 +223,7 @@ namespace ComfoAir
         private void updateTextBox(TextBox tb, string text)
         // Update a regular TextBox
         {
-            Dispatcher.BeginInvoke(new ThreadStart(delegate {
+            Dispatcher.Invoke(new ThreadStart(delegate {
                 tb.Text += text;
                 tb.Focus();
                 tb.CaretIndex = tb.Text.Length;
@@ -217,11 +231,13 @@ namespace ComfoAir
             }));
         }
 
+
         private void updateTextBox(FlowDocumentReader fdr, string text, fontstyles fstyles = fontstyles.NORMAL)
         // Update a FlowDocumentReader
         {
             // Create a new paragraph of text to add to the FDR
             Paragraph paragraph = new Paragraph();
+
             switch (fstyles)
             {
                 case fontstyles.NORMAL:
@@ -249,12 +265,39 @@ namespace ComfoAir
             addToTextBox(fdr, paragraph);
         }
 
-        private void addToTextBox(FlowDocumentReader fdr, Block TextBlock)
+        private void addToTextBox(FlowDocumentReader fdr, Block tBlock)
         {
             // Check if document exists in FlowDocumentReader, otherwise create one
             FlowDocument document = checkDocument(fdr);
-            document.Blocks.Add(TextBlock);
+            
+            // Add a new textblock
+            document.Blocks.Add(tBlock);
+
+            // Scroll to bottom
+            ScrollViewer scroller = FindScroll(fdr as Visual);
+            if (scroller != null)
+                (scroller as ScrollViewer).ScrollToBottom();
         }
+
+        private void appendToTextBox(FlowDocumentReader fdr, string text)
+        {
+            // Retrieve last text block and use that as paragraph
+            FlowDocument document = checkDocument(fdr);
+            Block lastBlock = document.Blocks.LastBlock;
+            if (lastBlock == null)
+            {
+                // Create a new text block
+                Paragraph paragraph = new Paragraph();
+                document.Blocks.Add(paragraph);
+                lastBlock = document.Blocks.LastBlock;
+            }
+            lastBlock.ContentEnd.InsertTextInRun(text);
+
+            ScrollViewer scroller = FindScroll(fdr as Visual);
+            if (scroller != null)
+                (scroller as ScrollViewer).ScrollToBottom();
+        }
+
 
         private FlowDocument checkDocument(FlowDocumentReader fdr)
         // Check if document exists in FlowDocumentReader, otherwise create one
@@ -295,6 +338,23 @@ namespace ComfoAir
             return Result.ToString();
         }
 
+        public static ScrollViewer FindScroll(Visual visual)
+        {
+            if (visual is ScrollViewer)
+                return visual as ScrollViewer;
+            ScrollViewer searchChiled = null;
+            DependencyObject chiled;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(visual); i++)
+            {
+                chiled = VisualTreeHelper.GetChild(visual, i);
+                if (chiled is Visual)
+                    searchChiled = FindScroll(chiled as Visual);
+                if (searchChiled != null)
+                    return searchChiled;
+            }
+            return null;
+        }
+
         // ===================================================================================
         // GUI EVENT HANDLERS
         // ===================================================================================
@@ -327,6 +387,7 @@ namespace ComfoAir
                 updateTextBox(tb_RawOutput, "--- FILE: " + fileToRead + "---", fontstyles.BOLD);
 
                 // Parse data and display
+                updateTextBox(tb_RawOutput, ByteArrayToHexString(fileBytes));
                 parseAndShowData(fileBytes);
                 updateTextBox(tb_Output, "--- END OF FILE ---", fontstyles.BOLD);
                 updateTextBox(tb_RawOutput, "--- END OF FILE ---", fontstyles.BOLD);

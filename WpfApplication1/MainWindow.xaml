@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ComfoAir"
         mc:Ignorable="d"
-        Title="ComfoAir Client" Height="350" Width="525">
+        Title="ComfoAir Client" Height="600" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -47,7 +47,7 @@
                         <TextBox Grid.Row="0" Grid.Column="1" x:Name="tb_FileName"  Height="24" Margin="16,0,10,10" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch" MaxLines="1" TextWrapping="NoWrap" />
                         <Button Grid.Row="0" Grid.Column="2" x:Name="but_Browse"  Content="Browse..." HorizontalAlignment="Left" Margin="0,0,10,10" VerticalAlignment="Top" Width="75" Height="24" Click="but_Browse_Click"/>
                         <Button Grid.Row="0" Grid.Column="3" x:Name="but_Load"  Content="Load" HorizontalAlignment="Left" Margin="0,0,10,10" VerticalAlignment="Top" Width="75" Height="24" Click="but_Load_Click"/>
-                     </Grid>
+                    </Grid>
                 </TabItem>
                 <TabItem>
                     <Grid>
@@ -89,7 +89,7 @@
                         <!--
                             <TextBox x:Name="tb_Output" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" IsReadOnly = "True" /> 
                         -->
-                     </Grid>
+                    </Grid>
                 </TabItem>
                 <TabItem Header="Raw Data" FontSize="12">
                     <FlowDocumentReader x:Name="tb_RawOutput" IsScrollViewEnabled="True" IsTwoPageViewEnabled="False" ViewingMode="Scroll" IsPageViewEnabled="False"   />
