@@ -1,6 +1,6 @@
 # ComfoAir Client
 ## Description
-Reads &amp; analyzes data of Zehnder ComfoAir/ComfoD/WHR ventilation units, using the on-board RS232 port. I'm using this to read the air  temperatures on my ComfoD 450 unit. The RS232 port is located near the power/remote unit connectivity and exposes (in my case) the communication between the CC-Ease control panel and the Zehnder unit.
+Reads &amp; analyzes data of Zehnder ComfoAir/ComfoD/WHR ventilation units, using the on-board RS232 port. I'm using this to read the air  temperatures on my ComfoD 450 unit and calculate real life efficiences. The RS232 port is located near the power/remote unit connectivity and exposes (in my case) the communication between the CC-Ease control panel and the Zehnder unit.
 
 Should also work for other Zehnder units such as the ComfoD 250/350/450/550 series and new ComfoAir series, the WHR variants. Not tested on Paul units though.
 
