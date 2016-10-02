@@ -11,11 +11,13 @@ Credits for the description of the Zehnder ComfoAir RS232 protocol go to **See-S
 ## Features
 Current features:
 * Live data processing / raw data dump for serial port connections.
-* Can analyze serial dumps that you saved in another application
+* Export of raw data to files.
+* Load previously saved data dumps for new analysis.
+* Allows replay to serial port (e.g. to mimic the control panel).
 
 Todo in a future release, in a near and/or distant future, whenever I feel like it:
 * At the moment, about 20% of the commands detected are also analyzed and all parameters outputted to screen.
-* Support sending of commands to unit
+* Support sending of individual commands to unit
 
 Don't hold your breath though ;).
 
@@ -23,13 +25,17 @@ Don't hold your breath though ;).
 You need a serial cable to connect the RS232 (female) DSUB-9 connector from the connection board to your computer. If like most people, your computer no longer has a serial port, you can buy a USB-to-RS232 cable. People who know more about that stuff advised me to buy an FTDI based adapter because the drivers (Windows/Linux/...) are basically everywhere and in every OS you would use today and in the near future. Just for reference, I bought [this](https://www.amazon.de/dp/B01E0R8L90/) one on Amazon.
 
 ## Downloads
-Version 0.1
- * Win32 Executable: [ZIP](https://github.com/jacobstim/comfoairclient/files/504331/20161001_ComfoAirClient.v0.1.zip)
+
+Version | Package
+------------ | -------------
+v0.2 | Win32 Executable: [ZIP](https://github.com/jacobstim/comfoairclient/files/505209/20161002_ComfoAirClient.v0.2.zip)
+v0.1 | Win32 Executable: [ZIP](https://github.com/jacobstim/comfoairclient/files/504331/20161001_ComfoAirClient.v0.1.zip)
 
 ## Version History
 
 Version | Date | Description
 ------------ | ------------- | -------------
+0.2 | 02 October 2016 | Saving of captured data, playback to serial device, advanced serial settings
 0.1 | 01 October 2016 | First release
 
 ## Legal & disclaimer & license
