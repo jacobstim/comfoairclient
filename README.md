@@ -1,6 +1,6 @@
 # ComfoAir Client
 ## Description
-Reads &amp; analyzes data of Zehnder ComfoAir/ComfoD/WHR ventilation units, using the on-board RS232 port. I'm using this to read the air  temperatures on my ComfoD 450 unit and calculate real life heat exchanger (WTW) efficiences. The RS232 port is located near the power/remote unit connectivity and exposes (in my case) the communication between the CC-Ease control panel and the Zehnder unit.
+Reads &amp; analyzes data of Zehnder ComfoAir/ComfoD/WHR ventilation units, using the on-board RS232 port. I'm using this to read the air  temperatures on my ComfoD 450 unit and calculate real life heat exchanger (WTW) efficiences. The RS232 port is located near the power/remote unit connectivity and exposes (in my case) the communication between the ComfoSense control panel and the Zehnder unit.
 
 Should also work for other Zehnder units such as the ComfoD 250/350/450/550 series and new ComfoAir series, the WHR variants. Not tested on Paul units though.
 
@@ -13,7 +13,7 @@ Current features:
 * Live data processing / raw data dump for serial port connections.
 * Export of raw data to files.
 * Load previously saved data dumps for new analysis.
-* Allows replay to serial port (e.g. to mimic the control panel).
+* Allows replay to serial port (e.g. to mimic the ComfoSense/CC-Ease control panel).
 
 Todo in a future release, in a near and/or distant future, whenever I feel like it:
 * At the moment, about 20% of the commands detected are also analyzed and all parameters outputted to screen.
