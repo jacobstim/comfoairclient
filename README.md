@@ -4,7 +4,7 @@ Reads &amp; analyzes data of Zehnder ComfoAir/ComfoD/WHR ventilation units, usin
 
 Should also work for other Zehnder units such as the ComfoD 250/350/450/550 series and new ComfoAir series, the WHR variants. Not tested on Paul units though.
 
-**Warning:** You can get electrocuted or blow up your ventilation unit by trying to connect to the serial port inside the unit. If you don't know what you are doing, then don't go there -- (*serious face*): only official and real qualified technicians with all the necessary degrees and ... ehrr... all certifications and stuff can do this. Don't come whining I didn't warn you, and warn your next of kin upfront that they are not allowed to sue me for you turning into a half-fried vegetable.
+>**Warning:** You can get electrocuted or blow up your ventilation unit by trying to connect to the serial port inside the unit. If you don't know what you are doing, then don't go there -- (*serious face*): only official and real qualified technicians with all the necessary degrees and ... ehrr... all certifications and stuff can do this. Don't come whining I didn't warn you, and warn your next of kin upfront that they are not allowed to sue me for you turning into a half-fried vegetable.
 
 Credits for the description of the Zehnder ComfoAir RS232 protocol go to **See-Solutions**, see their original description [here](http://www.see-solutions.de/sonstiges/Protokollbeschreibung_ComfoAir.pdf).
 
