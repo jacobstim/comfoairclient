@@ -76,8 +76,6 @@ namespace ComfoAirClient
                     {
                         currentcmd.checksumOk = true;
                     }
-                    // Look up command 
-
 
                     // ----------------------------------------
                     // ADD TO RESULT LIST
@@ -93,7 +91,6 @@ namespace ComfoAirClient
                 }
                 else
                 {
-                    // No command start or command stop not ok
                     break;
                 }
             }
@@ -347,7 +344,7 @@ namespace ComfoAirClient
 
         private static int findSequence(byte[] array, int start, byte[] sequence)
         {
-            int end = array.Length - sequence.Length; // past here no match is possible
+            int end = array.Length - sequence.Length +1; // past here no match is possible
             byte firstByte = sequence[0]; // cached to tell compiler there's no aliasing
 
             while (start < end)

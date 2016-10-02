@@ -2,10 +2,12 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -28,7 +30,17 @@ namespace ComfoAir
         public MainWindow()
         {
             InitializeComponent();
+            tb_OutFileName.Text = DateTime.Now.ToString("yyyyMMdd") + "_ZehnderRS232.dat";
         }
+
+        // ===================================================================================
+        // MAIN VARIABLES
+        // ===================================================================================
+
+        BinaryWriter bw_output;
+        bool bRawDumpToFile = false;
+        FileMode outFileMode = FileMode.Append;
+        string outputFile = "";
 
         // ===================================================================================
         // SERIAL PORT CODE
@@ -47,7 +59,25 @@ namespace ComfoAir
             cb_SerialPort.Items.Clear();
             foreach (string sPort in SerialPort.GetPortNames())
             {
-                cb_SerialPort.Items.Add(sPort);
+                // Urghhh... serial ports are just implemented like crap in .NET. The GetPortNames() just
+                // returns all serial ports defined in the registry, including those that are "inactive"
+                // in device manager. If like me, you have 200 Arduino COM ports, that will just mess up
+                // the results. 
+                //
+                // Workaround: we try to open every port that we find, listing only those that we can
+                // access.
+                try
+                {
+                    SerialPort tempport = new SerialPort(sPort);
+                    tempport.Open();
+                    // If we get to this code, we can open the port. Close & add it... 
+                    tempport.Close();
+                    cb_SerialPort.Items.Add(sPort);
+                }
+                catch (Exception ex)
+                {
+                    // Let it be known to the world that we do nothing here.
+                }
             }
             // Did we get items?
             if (cb_SerialPort.Items.Count == 0)
@@ -57,12 +87,15 @@ namespace ComfoAir
                 cb_SerialPort.IsEnabled = false;
                 but_Start.IsEnabled = false;
                 but_Stop.IsEnabled = false;
-            } else
+                cb_SerialAdvanced.IsEnabled = false;
+            }
+            else
             {
                 cb_SerialPort.SelectedIndex = 0;
                 cb_SerialPort.IsEnabled = true;
                 but_Start.IsEnabled = true;
                 but_Stop.IsEnabled = false;
+                cb_SerialAdvanced.IsEnabled = true;
             }
         }
 
@@ -90,7 +123,7 @@ namespace ComfoAir
                     serOptions = "7N1";
                     break;
             }
-            _serialPort.BaudRate = 9600;
+            _serialPort.BaudRate = Convert.ToInt32(tb_Baudrate.Text);
             _serialPort.Handshake = Handshake.None;
             _serialPort.PortName = cb_SerialPort.Text;
             _serialPort.DataReceived += new SerialDataReceivedEventHandler(_serialPort_DataReceived);
@@ -137,10 +170,7 @@ namespace ComfoAir
                 Array.Copy(serialBuffer, 0, readBuffer, 0, bytesRead);
 
                 // Dump raw data
-                Dispatcher.Invoke(new ThreadStart(delegate
-                {
-                    appendToTextBox(tb_RawOutput, ByteArrayToHexString(readBuffer));
-                }));
+                rawDataDump(readBuffer);
 
                 // Prepare for parsing; first check if there is still outstanding data to parse...
                 byte[] truncBuffer = new byte[bytesRead + processSize];
@@ -208,8 +238,11 @@ namespace ComfoAir
             foreach (ZehnderCommand cmd in cmds)
             {
                 //updateTextBox(tb_Output, cmd.ToString());
-                addToTextBox(tb_Output, cmd.ToTable());
-                addToTextBox(tb_Output, new BlockUIContainer(new Separator()));
+                Dispatcher.Invoke(new ThreadStart(delegate
+                {
+                    addToTextBox(tb_Output, cmd.ToTable());
+                    addToTextBox(tb_Output, new BlockUIContainer(new Separator()));
+                }));
             }
             // Return last parsed position in the supplied buffer
             return zParser.parseOffset;
@@ -219,6 +252,30 @@ namespace ComfoAir
         // ===================================================================================
         // DATA VISUALISATION CODE
         // ===================================================================================
+
+        private void rawDataDump(byte[] data)
+        {
+            // Update UI
+            Dispatcher.Invoke(new ThreadStart(delegate
+            {
+                appendToTextBox(tb_RawOutput, ByteArrayToHexString(data));
+            }));
+
+            // Save data to file?
+            if (bRawDumpToFile)
+            {
+                if (bw_output == null)
+                {
+                    raw_OpenFile();
+                }
+                if (bw_output != null)
+                {
+                    // Dump data
+                    bw_output.Write(data);
+                }
+            }
+
+        }
 
         private void updateTextBox(TextBox tb, string text)
         // Update a regular TextBox
@@ -356,7 +413,142 @@ namespace ComfoAir
         }
 
         // ===================================================================================
-        // GUI EVENT HANDLERS
+        // GUI EVENT HANDLERS - SERIAL STUFF
+        // ===================================================================================
+
+        private void but_Load_Click(object sender, RoutedEventArgs e)
+        {
+            String fileToRead = tb_FileName.Text;
+
+            // Check if file exists
+            if (File.Exists(fileToRead))
+            {
+                // Load data into memory
+                byte[] fileBytes = File.ReadAllBytes(fileToRead);
+
+                logWindow("Analyzing file...");
+
+                // Add header to output
+                updateTextBox(tb_Output, "--- FILE: " + fileToRead + "---", fontstyles.BOLD);
+                updateTextBox(tb_RawOutput, "--- FILE: " + fileToRead + "---", fontstyles.BOLD);
+                updateTextBox(tb_RawOutput, ""); // new place holder for appending the raw data to
+
+                // Parse data and display
+                // NOTE: We run that task in the background
+                var bgWorker = new BackgroundWorker();
+                bgWorker.DoWork += (s, ex) => {
+                    // Do this work in the background...
+                    rawDataDump(fileBytes);
+                    parseAndShowData(fileBytes);
+                };
+                bgWorker.RunWorkerCompleted += (s, ex) => {
+                    // Update the UI.
+                    updateTextBox(tb_Output, "--- END OF FILE ---", fontstyles.BOLD);
+                    updateTextBox(tb_RawOutput, "--- END OF FILE ---", fontstyles.BOLD);
+
+                    logWindow("Finished analyzing file!");
+                };
+                bgWorker.RunWorkerAsync();
+            }
+            else
+            {
+                logWindow("ERROR: File does not exist!");
+            }
+        }
+
+        private void but_Playback_Click(object sender, RoutedEventArgs e)
+        {
+            // Prompt for file to playback
+            OpenFileDialog dlg_Image = new OpenFileDialog();
+            dlg_Image.Title = "Open binary file to playback";
+            dlg_Image.Filter = "All files (*.*)|*.*";
+            bool? result = dlg_Image.ShowDialog(mainWindow);
+            if ((bool)result)
+            {
+                String fileToPlayback = dlg_Image.FileName;
+
+                // Serial Port already open?
+                if (_serialPort != null)
+                {
+                    if (_serialPort.IsOpen == false)
+                    {
+                        // Open Serial Port using current settings
+                        startSerialMonitoring();
+                    }
+                    // Successfully opened the port?
+                    if (_serialPort.IsOpen)
+                    {
+                        byte[] data = File.ReadAllBytes(fileToPlayback);
+                        logWindow("Sending data to serial...");
+
+                        // Playback binary data
+                        _serialPort.Write(data,0,data.Length);
+
+                        logWindow("Finished playing back file...");
+                    }
+                }
+
+            }
+
+
+
+        }
+
+
+        // ===================================================================================
+        // FILE I/O STUFF
+        // ===================================================================================
+
+        private void raw_OpenFile()
+        {
+            try {
+                // Open file so we can start writing away... 
+                if (System.IO.Path.GetDirectoryName(outputFile).Length == 0)
+                {
+                    // no directory specified so write to current dir
+                    outputFile = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), outputFile);
+                }
+                bw_output = new BinaryWriter(new FileStream(outputFile, outFileMode));
+            }
+            catch (Exception exc)
+            {
+                logWindow("Error: Cannot open output file for writing...");
+                // Uncheck the box again
+                cb_Output.IsChecked = false;
+            }
+        }
+
+        private void raw_CloseFile()
+        {
+            // Stop file output
+            if (bw_output != null)
+            {
+                bw_output.Close();
+                bw_output = null;
+            }
+
+
+        }
+
+        // ASSOCIATED UI HANDLERS
+        private void tb_OutFileName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            outputFile = tb_OutFileName.Text;
+        }
+
+        private void cb_OutputMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (optOverwrite.IsSelected)
+            {
+                outFileMode = FileMode.Create;
+            }
+            else
+            {
+                outFileMode = FileMode.Append;
+            }
+        }
+        // ===================================================================================
+        // GUI EVENT HANDLERS - MISC STUFF
         // ===================================================================================
 
         private void but_Browse_Click(object sender, RoutedEventArgs e)
@@ -373,32 +565,80 @@ namespace ComfoAir
             }
         }
 
-        private void but_Load_Click(object sender, RoutedEventArgs e)
+        private void but_OutBrowse_Click(object sender, RoutedEventArgs e)
         {
-            String fileToRead = tb_FileName.Text;
+            SaveFileDialog dlg_OutFile = new SaveFileDialog();
 
-            // Check if file exists
-            if (File.Exists(fileToRead)) {
-                // Load data into memory
-                byte[] fileBytes = File.ReadAllBytes(fileToRead);
-
-                // Add header to output
-                updateTextBox(tb_Output, "--- FILE: " + fileToRead + "---", fontstyles.BOLD);
-                updateTextBox(tb_RawOutput, "--- FILE: " + fileToRead + "---", fontstyles.BOLD);
-
-                // Parse data and display
-                updateTextBox(tb_RawOutput, ByteArrayToHexString(fileBytes));
-                parseAndShowData(fileBytes);
-                updateTextBox(tb_Output, "--- END OF FILE ---", fontstyles.BOLD);
-                updateTextBox(tb_RawOutput, "--- END OF FILE ---", fontstyles.BOLD);
-
-            }
-            else
+            dlg_OutFile.Title = "Save binary file";
+            dlg_OutFile.Filter = "All files (*.*)|*.*";
+            dlg_OutFile.FileName = System.IO.Path.GetFileName(tb_OutFileName.Text);
+            string initialDir = System.IO.Path.GetDirectoryName(tb_OutFileName.Text);
+            if (initialDir.Length > 0)
             {
-                logWindow("ERROR: File does not exist!");
+                dlg_OutFile.InitialDirectory = initialDir;
+            } else
+            {
+                dlg_OutFile.InitialDirectory = System.IO.Directory.GetCurrentDirectory();
+            }
+            bool? result = dlg_OutFile.ShowDialog(mainWindow);
+
+            if ((bool)result)
+            {
+                tb_OutFileName.Text = dlg_OutFile.FileName;
             }
         }
 
+        private void cb_Output_Checked(object sender, RoutedEventArgs e)
+        {
+            if ((bool)cb_Output.IsChecked) {
+                bRawDumpToFile = true;
+                // Disable changing the filename of the output
+                lab_OutFile.IsEnabled = false;
+                tb_OutFileName.IsEnabled = false;
+                but_OutBrowse.IsEnabled = false;
+                cb_OutFileOptions.IsEnabled = false;
+            }
+            else
+            {
+                // Close the file if it is open... 
+                bRawDumpToFile = false;
+                raw_CloseFile();
+
+                // Enable changing the filename of the output
+                lab_OutFile.IsEnabled = true;
+                tb_OutFileName.IsEnabled = true;
+                but_OutBrowse.IsEnabled = true;
+                cb_OutFileOptions.IsEnabled = true;
+
+            }
+        }
+
+        private void cb_SerialAdvanced_Click(object sender, RoutedEventArgs e)
+        {
+            if ((bool)cb_SerialAdvanced.IsChecked)
+            {
+                // UI Enable
+                lab_Baudrate.IsEnabled = true;
+                tb_Baudrate.IsEnabled = true;
+                lab_SerOptions.IsEnabled = true;
+                cb_SerialOptions.IsEnabled = true;
+                lab_SerDirection.IsEnabled = true;
+                cb_SerialDirection.IsEnabled = true;
+                cb_SerialDirection_SelectionChanged(null, null); // Update but_Playback according to actual settings
+            }
+            else
+            {
+                // UI Disable
+                lab_Baudrate.IsEnabled = false;
+                tb_Baudrate.IsEnabled = false;
+                lab_SerOptions.IsEnabled = false;
+                cb_SerialOptions.IsEnabled = false;
+                lab_SerDirection.IsEnabled = false;
+                cb_SerialDirection.IsEnabled = false;
+                but_Playback.IsEnabled = false;
+            }
+        }
+ 
         private void rb_Checked(object sender, RoutedEventArgs e)
         // Because radio buttons are exclusive, we just use one routine for all radio buttons
         {
@@ -444,6 +684,27 @@ namespace ComfoAir
             }
         }
 
+        private void cb_SerialDirection_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (optInput.IsSelected)
+            {
+                // Input mode
+                if (but_Playback != null)       // Called during initialization too... 
+                {
+                    but_Playback.IsEnabled = false;
+                }
+            }
+            else
+            {
+                // Output mode
+                if (but_Playback != null)
+                {
+                    but_Playback.IsEnabled = true;
+                }
+            }
+        }
+
+
         private void but_Start_Click(object sender, RoutedEventArgs e)
         {
             startSerialMonitoring();
@@ -454,6 +715,7 @@ namespace ComfoAir
             stopSerialMonitoring();
         }
 
+ 
 
         // ===================================================================================
         // HELPER FUNCTIONS
@@ -465,5 +727,39 @@ namespace ComfoAir
             Dispatcher.BeginInvoke(new ThreadStart(delegate { sb_Label.Content = logtext; }));
         }
 
+        // ===================================================================================
+        // INTEGER TEXTBOX
+        // ===================================================================================
+
+        public static bool onlyNumeric(string text)
+        {
+            Regex regex = new Regex("[^0-9.-]+"); //regex that allows numeric input only
+            return !regex.IsMatch(text); // 
+        }
+
+        private void tb_PreviewNumericOnly(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !onlyNumeric(e.Text);
+        }
+
+        private void tb_PasteNumericOnly(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(String)))
+            {
+                String text = (String)e.DataObject.GetData(typeof(String));
+                if (!onlyNumeric(text))
+                {
+                    e.CancelCommand();
+                }
+            }
+            else
+            {
+                e.CancelCommand();
+            }
+        }
+
+
     }
+
+
 }

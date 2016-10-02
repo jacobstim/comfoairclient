@@ -44,37 +44,64 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Label Grid.Row="0" Grid.Column="0" Content="File:" />
-                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="tb_FileName"  Height="24" Margin="16,0,10,10" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch" MaxLines="1" TextWrapping="NoWrap" />
+                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="tb_FileName"  Height="24" Margin="16,0,10,10" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch" MaxLines="1" VerticalContentAlignment="Center" TextWrapping="NoWrap" />
                         <Button Grid.Row="0" Grid.Column="2" x:Name="but_Browse"  Content="Browse..." HorizontalAlignment="Left" Margin="0,0,10,10" VerticalAlignment="Top" Width="75" Height="24" Click="but_Browse_Click"/>
                         <Button Grid.Row="0" Grid.Column="3" x:Name="but_Load"  Content="Load" HorizontalAlignment="Left" Margin="0,0,10,10" VerticalAlignment="Top" Width="75" Height="24" Click="but_Load_Click"/>
                     </Grid>
                 </TabItem>
                 <TabItem>
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="Serial:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
-                        <ComboBox Grid.Row="0" Grid.Column="1" x:Name="cb_SerialPort" HorizontalAlignment="Stretch" Margin="10,0,10,10" VerticalAlignment="Top" Width="auto" SelectionChanged="cb_SerialPort_SelectionChanged"/>
-                        <Label Grid.Row="0" Grid.Column="2" Content="Serial Options:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top"/>
-                        <ComboBox Grid.Row="0" Grid.Column="3" x:Name="cb_SerialOptions" HorizontalAlignment="Stretch" Margin="10,0,10,10" VerticalAlignment="Top" Width="auto" SelectionChanged="cb_SerialOptions_SelectionChanged" SelectedIndex="1">
-                            <ComboBoxItem x:Name="opt7n1">7N1</ComboBoxItem>
-                            <ComboBoxItem x:Name="opt8n1">8N1</ComboBoxItem>
-                        </ComboBox>
-                        <Grid Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" Grid.ColumnSpan="4">
+                        <!-- SERIAL PORT and CONNECT/DISCONNECT BUTTONS -->
+                        <Grid Grid.Row="0" Grid.Column="0" VerticalAlignment="Top">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Row="0" Grid.Column="0" x:Name="but_Start" Content="Connect" HorizontalAlignment="Left" Margin="10,0,10,10" VerticalAlignment="Top" Width="75" Click="but_Start_Click"/>
-                            <Button Grid.Row="0" Grid.Column="1" x:Name="but_Stop" Content="Disconnect" IsEnabled="False" HorizontalAlignment="Left" Margin="10,0,10,10" VerticalAlignment="Top" Width="75" Click="but_Stop_Click"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Serial:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+                            <Grid Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2">
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="cb_SerialPort" HorizontalAlignment="Stretch" Margin="10,0,10,10" VerticalAlignment="Top" Width="auto" SelectionChanged="cb_SerialPort_SelectionChanged"/>
+                            </Grid>
+                            <Button Grid.Row="1" Grid.Column="1" x:Name="but_Start" Content="Connect" HorizontalAlignment="Left" Margin="10,0,10,10" VerticalAlignment="Top" Width="75" Click="but_Start_Click"/>
+                            <Button Grid.Row="1" Grid.Column="2" x:Name="but_Stop" Content="Disconnect" IsEnabled="False" HorizontalAlignment="Left" Margin="10,0,10,10" VerticalAlignment="Top" Width="75" Click="but_Stop_Click"/>
+                        </Grid>
+                        <!-- SERIAL OPTIONS -->
+                        <Grid Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Margin="30,0,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Row="0" Grid.Column="0" x:Name="cb_SerialAdvanced" Content="Advanced Settings" Margin="0,6,5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Click="cb_SerialAdvanced_Click" />
+                            <Label Grid.Row="0" Grid.Column="1" x:Name="lab_Baudrate" Content="Baudrate:" HorizontalAlignment="Left" Margin="10,0,10,0" VerticalAlignment="Top" IsEnabled="False"/>
+                            <TextBox Grid.Row="0" Grid.Column="2" x:Name="tb_Baudrate" Text="9600" HorizontalContentAlignment="Right" Height="24" Margin="0,1,0,0" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" MaxLines="1" TextWrapping="NoWrap" IsEnabled="False" PreviewTextInput="tb_PreviewNumericOnly" DataObject.Pasting="tb_PasteNumericOnly" />
+                            <Label Grid.Row="1" Grid.Column="1" x:Name="lab_SerOptions" Content="Serial Options:" HorizontalAlignment="Left" Margin="10,0,10,0" VerticalAlignment="Top" IsEnabled="False"/>
+                            <ComboBox Grid.Row="1" Grid.Column="2" x:Name="cb_SerialOptions" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Center" Width="auto" SelectionChanged="cb_SerialOptions_SelectionChanged" SelectedIndex="1" IsEnabled="False">
+                                <ComboBoxItem x:Name="opt7n1">7N1</ComboBoxItem>
+                                <ComboBoxItem x:Name="opt8n1">8N1</ComboBoxItem>
+                            </ComboBox>
+                            <Label Grid.Row="0" Grid.Column="3" x:Name="lab_SerDirection" Content="I/O Direction:" HorizontalAlignment="Left" Margin="20,0,10,0" VerticalAlignment="Top" IsEnabled="False"/>
+                            <ComboBox Grid.Row="0" Grid.Column="4" x:Name="cb_SerialDirection" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Center" Width="auto" SelectionChanged="cb_SerialDirection_SelectionChanged" SelectedIndex="0" IsEnabled="False">
+                                <ComboBoxItem x:Name="optInput">Input</ComboBoxItem>
+                                <ComboBoxItem x:Name="optOutput">Both</ComboBoxItem>
+                            </ComboBox>
+                            <Button Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" x:Name="but_Playback" Content="Playback file to Serial" Margin="20,3,0,3" VerticalAlignment="Center" HorizontalAlignment="Stretch"  Width="auto" Click="but_Playback_Click" IsEnabled="False"/>
                         </Grid>
                     </Grid>
                 </TabItem>
@@ -85,17 +112,33 @@
                 <TabItem Header="Interpreted Data">
                     <Grid>
                         <FlowDocumentReader x:Name="tb_Output" IsScrollViewEnabled="True" IsTwoPageViewEnabled="False" ViewingMode="Scroll" IsPageViewEnabled="False" />
-
-                        <!--
-                            <TextBox x:Name="tb_Output" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" IsReadOnly = "True" /> 
-                        -->
                     </Grid>
                 </TabItem>
                 <TabItem Header="Raw Data" FontSize="12">
-                    <FlowDocumentReader x:Name="tb_RawOutput" IsScrollViewEnabled="True" IsTwoPageViewEnabled="False" ViewingMode="Scroll" IsPageViewEnabled="False"   />
-                    <!-- 
-                    <TextBox x:Name="tb_RawOutput" TextWrapping="Wrap" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" IsReadOnly = "True" />
-                    -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FlowDocumentReader Grid.Row="0" Grid.ColumnSpan="5"  x:Name="tb_RawOutput" IsScrollViewEnabled="True" IsTwoPageViewEnabled="False" ViewingMode="Scroll" IsPageViewEnabled="False"   />
+                        <Separator Grid.Row="1" Grid.ColumnSpan="5" />
+                        <CheckBox Grid.Row="2" Grid.Column="0" x:Name="cb_Output" Content="Save to file" Margin="0,6,20,0" HorizontalAlignment="Left" VerticalAlignment="Center" Click="cb_Output_Checked" />
+                        <Label Grid.Row="2" Grid.Column="1" x:Name="lab_OutFile" Content="Output File:" Margin="0,5,0,0"  />
+                        <TextBox Grid.Row="2" Grid.Column="2" x:Name="tb_OutFileName"  Height="24" Margin="0,5,0,0" VerticalAlignment="Center" Width="auto" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" MaxLines="1" TextWrapping="NoWrap" TextChanged="tb_OutFileName_TextChanged" />
+                        <Button Grid.Row="2" Grid.Column="3" x:Name="but_OutBrowse"  Content="Browse..." HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Center" Width="75" Height="24" Click="but_OutBrowse_Click" />
+                        <ComboBox Grid.Row="2" Grid.Column="4" x:Name="cb_OutFileOptions" HorizontalAlignment="Stretch" Margin="10,5,0,0" VerticalAlignment="Center" Width="auto" Height="24" SelectionChanged="cb_OutputMode_SelectionChanged" SelectedIndex="0">
+                            <ComboBoxItem x:Name="optOverwrite">Overwrite</ComboBoxItem>
+                            <ComboBoxItem x:Name="optAppend">Append</ComboBoxItem>
+                        </ComboBox>
+                    </Grid>
                 </TabItem>
             </TabControl>
         </Grid>
